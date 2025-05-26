@@ -2,6 +2,19 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 import torch
 from transformers import BertTokenizer, BertForSequenceClassification
+import uvicorn
+
+def get_wordnet_pos(tag):
+    if tag.startswith('J'):
+        return wordnet.ADJ
+    elif tag.startswith('V'):
+        return wordnet.VERB
+    elif tag.startswith('N'):
+        return wordnet.NOUN
+    elif tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return wordnet.NOUN
 
 # FastAPI initialization
 app = FastAPI()
@@ -11,7 +24,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # Model path
-MODEL_PATH = "bert_model2.pt"  # Kaydettiğin dosya adını doğru yazdım
+MODEL_PATH = "bert_model2.pt" 
 
 # Load tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -31,6 +44,17 @@ class TextInput(BaseModel):
 
 
 labels = ["Positive", "Neutral", "Negative"] 
+def clean_text(text):
+    text = contractions.fix(text)
+    text = text.lower()
+    text = re.sub(r'[^a-zA-Z0-9\s]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    words = word_tokenize(text)
+    words = [t for t in words if t not in stop_words and t not in punctuations and t.isalpha()]
+    pos_tags = pos_tag(words)
+    lemmatized = [lemmatizer.lemmatize(word, get_wordnet_pos(tag)) for word, tag in pos_tags]
+    return " ".join(lemmatized)
+
 
 # API endpoint
 @app.post("/predict")
@@ -50,5 +74,4 @@ async def predict_sentiment(input_data: TextInput):
 
 # Run API (opsiyonel)
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
