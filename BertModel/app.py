@@ -16,7 +16,6 @@ MODEL_PATH = "bert_model2.pt"  # Kaydettiğin dosya adını doğru yazdım
 # Load tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-# Initialize the model architecture first
 model = BertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=3)
 
 # Load the trained model weights
@@ -30,8 +29,8 @@ model.eval()
 class TextInput(BaseModel):
     text: str
 
-# Label list (senin görevine göre burayı değiştirdim)
-labels = ["Positive", "Neutral", "Negative"]  # Örneğin senin sınıfların bunlarsa böyle
+
+labels = ["Positive", "Neutral", "Negative"] 
 
 # API endpoint
 @app.post("/predict")
